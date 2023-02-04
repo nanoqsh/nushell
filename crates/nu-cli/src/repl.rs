@@ -494,7 +494,11 @@ pub fn evaluate_repl(
 
                             report_error(
                                 &working_set,
-                                &ShellError::DirectoryNotFound(tokens.0[0].span, None),
+                                &ShellError::DirectoryNotFound {
+                                    source_span: tokens.0[0].span,
+                                    message: None,
+                                    dirname: path.display().to_string(),
+                                },
                             );
                         }
                         let path = nu_path::canonicalize_with(path, &cwd)

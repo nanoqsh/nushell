@@ -75,7 +75,7 @@ where
 /// the query, the value of `--exclude` is excluded from the search.
 pub fn query<P>(arg: &P, excluded: Option<PathBuf>, span: Span) -> Result<PathBuf, ShellError>
 where
-    P: AsRef<Path>,
+    P: AsRef<Path> + ?Sized,
 {
     // If the arg is a real path and not an abbreviation, return it. It
     // prevents potential unexpected behavior due to abbreviation expansion.

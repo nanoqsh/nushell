@@ -41,10 +41,14 @@ pub fn glob_from(
         }
         (Some(p), path)
     } else {
-        let path = if let Ok(p) = canonicalize_with(path, cwd) {
+        let path = if let Ok(p) = canonicalize_with(&path, cwd) {
             p
         } else {
-            return Err(ShellError::DirectoryNotFound(pattern.span, None));
+            return Err(ShellError::DirectoryNotFound {
+                source_span: pattern.span,
+                message: None,
+                dirname: expand_path_with(&path, cwd).display().to_string(),
+            });
         };
         (path.parent().map(|parent| parent.to_path_buf()), path)
     };

@@ -266,7 +266,11 @@ fn move_file(
     };
 
     if !destination_dir_exists {
-        return Err(ShellError::DirectoryNotFound(to_span, None));
+        return Err(ShellError::DirectoryNotFound {
+            source_span: to_span,
+            message: None,
+            dirname: to.display().to_string(),
+        });
     }
 
     // This can happen when changing case on a case-insensitive filesystem (ex: changing foo to Foo on Windows)
@@ -277,7 +281,13 @@ fn move_file(
     if !from_to_are_same_file && to.is_dir() {
         let from_file_name = match from.file_name() {
             Some(name) => name,
-            None => return Err(ShellError::DirectoryNotFound(to_span, None)),
+            None => {
+                return Err(ShellError::DirectoryNotFound {
+                    source_span: to_span,
+                    message: None,
+                    dirname: from.display().to_string(),
+                })
+            }
         };
 
         to.push(from_file_name);

@@ -677,7 +677,13 @@ Either make sure {0} is a string, or add a 'to_string' entry for it in ENV_CONVE
     /// Make sure the directory in the error message actually exists before trying again.
     #[error("Directory not found")]
     #[diagnostic(code(nu::shell::directory_not_found), url(docsrs))]
-    DirectoryNotFound(#[label("directory not found")] Span, #[help] Option<String>),
+    DirectoryNotFound {
+        #[label("directory `{dirname}` not found")]
+        source_span: Span,
+        #[help]
+        message: Option<String>,
+        dirname: String,
+    },
 
     /// Attempted to perform an operation on a directory that doesn't exist.
     ///

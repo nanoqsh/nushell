@@ -84,24 +84,30 @@ impl Command for Cd {
 
                     if let Some(oldpwd) = oldpwd {
                         let path = oldpwd.as_path()?;
-                        let path = match nu_path::canonicalize_with(path.clone(), &cwd) {
+                        let path = match nu_path::canonicalize_with(&path, &cwd) {
                             Ok(p) => p,
                             Err(e1) => {
                                 if use_abbrev {
                                     match query(&path, None, v.span) {
                                         Ok(p) => p,
                                         Err(e) => {
-                                            return Err(ShellError::DirectoryNotFound(
-                                                v.span,
-                                                Some(format!("IO Error: {e:?}")),
-                                            ))
+                                            return Err(ShellError::DirectoryNotFound {
+                                                source_span: v.span,
+                                                message: Some(format!("IO Error: {e:?}")),
+                                                dirname: nu_path::expand_path_with(&path, &cwd)
+                                                    .display()
+                                                    .to_string(),
+                                            })
                                         }
                                     }
                                 } else {
-                                    return Err(ShellError::DirectoryNotFound(
-                                        v.span,
-                                        Some(format!("IO Error: {e1:?}")),
-                                    ));
+                                    return Err(ShellError::DirectoryNotFound {
+                                        source_span: v.span,
+                                        message: Some(format!("IO Error: {e1:?}")),
+                                        dirname: nu_path::expand_path_with(&path, &cwd)
+                                            .display()
+                                            .to_string(),
+                                    });
                                 }
                             }
                         };
@@ -111,7 +117,7 @@ impl Command for Cd {
                     }
                 } else {
                     let path_no_whitespace =
-                        &v.item.trim_end_matches(|x| matches!(x, '\x09'..='\x0d'));
+                        v.item.trim_end_matches(|x| matches!(x, '\x09'..='\x0d'));
 
                     let path = match nu_path::canonicalize_with(path_no_whitespace, &cwd) {
                         Ok(p) => {
@@ -121,10 +127,16 @@ impl Command for Cd {
                                     match query(&p, None, v.span) {
                                         Ok(path) => path,
                                         Err(e) => {
-                                            return Err(ShellError::DirectoryNotFound(
-                                                v.span,
-                                                Some(format!("IO Error: {e:?}")),
-                                            ))
+                                            return Err(ShellError::DirectoryNotFound {
+                                                source_span: v.span,
+                                                message: Some(format!("IO Error: {e:?}")),
+                                                dirname: nu_path::expand_path_with(
+                                                    path_no_whitespace,
+                                                    &cwd,
+                                                )
+                                                .display()
+                                                .to_string(),
+                                            })
                                         }
                                     };
                                 } else {
@@ -137,20 +149,29 @@ impl Command for Cd {
                         // if canonicalize failed, let's check to see if it's abbreviated
                         Err(e1) => {
                             if use_abbrev {
-                                match query(&path_no_whitespace, None, v.span) {
+                                match query(path_no_whitespace, None, v.span) {
                                     Ok(path) => path,
                                     Err(e) => {
-                                        return Err(ShellError::DirectoryNotFound(
-                                            v.span,
-                                            Some(format!("IO Error: {e:?}")),
-                                        ))
+                                        return Err(ShellError::DirectoryNotFound {
+                                            source_span: v.span,
+                                            message: Some(format!("IO Error: {e:?}")),
+                                            dirname: nu_path::expand_path_with(
+                                                path_no_whitespace,
+                                                &cwd,
+                                            )
+                                            .display()
+                                            .to_string(),
+                                        })
                                     }
                                 }
                             } else {
-                                return Err(ShellError::DirectoryNotFound(
-                                    v.span,
-                                    Some(format!("IO Error: {e1:?}")),
-                                ));
+                                return Err(ShellError::DirectoryNotFound {
+                                    source_span: v.span,
+                                    message: Some(format!("IO Error: {e1:?}")),
+                                    dirname: nu_path::expand_path_with(path_no_whitespace, &cwd)
+                                        .display()
+                                        .to_string(),
+                                });
                             }
                         }
                     };

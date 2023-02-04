@@ -70,17 +70,18 @@ impl Command for Watch {
         let cwd = current_dir(engine_state, stack)?;
         let path_arg: Spanned<String> = call.req(engine_state, stack, 0)?;
 
-        let path_no_whitespace = &path_arg
+        let path_no_whitespace = path_arg
             .item
             .trim_end_matches(|x| matches!(x, '\x09'..='\x0d'));
 
         let path = match nu_path::canonicalize_with(path_no_whitespace, cwd) {
             Ok(p) => p,
             Err(e) => {
-                return Err(ShellError::DirectoryNotFound(
-                    path_arg.span,
-                    Some(format!("IO Error: {e:?}")),
-                ))
+                return Err(ShellError::DirectoryNotFound {
+                    source_span: path_arg.span,
+                    message: Some(format!("IO Error: {e:?}")),
+                    dirname: path_no_whitespace.to_owned(),
+                })
             }
         };
 

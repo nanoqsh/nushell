@@ -43,11 +43,16 @@ impl Command for Enter {
         let new_path = new_path.as_path()?;
 
         let cwd = current_dir(engine_state, stack)?;
-        let new_path = nu_path::canonicalize_with(new_path, &cwd)?;
-
-        if !new_path.exists() {
-            return Err(ShellError::DirectoryNotFound(path_span, None));
-        }
+        let new_path = match nu_path::canonicalize_with(&new_path, &cwd) {
+            Ok(path) => path,
+            Err(e) => {
+                return Err(ShellError::DirectoryNotFound {
+                    source_span: path_span,
+                    message: Some(format!("IO Error: {e:?}")),
+                    dirname: new_path.display().to_string(),
+                })
+            }
+        };
 
         if !new_path.is_dir() {
             return Err(ShellError::DirectoryNotFoundCustom(
