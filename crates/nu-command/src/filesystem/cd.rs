@@ -120,22 +120,17 @@ impl Command for Cd {
                         v.item.trim_end_matches(|x| matches!(x, '\x09'..='\x0d'));
 
                     let path = match nu_path::canonicalize_with(path_no_whitespace, &cwd) {
-                        Ok(p) => {
-                            if !p.is_dir() {
+                        Ok(path) => {
+                            if !path.is_dir() {
                                 if use_abbrev {
                                     // if it's not a dir, let's check to see if it's something abbreviated
-                                    match query(&p, None, v.span) {
+                                    match query(&path, None, v.span) {
                                         Ok(path) => path,
                                         Err(e) => {
                                             return Err(ShellError::DirectoryNotFound {
                                                 source_span: v.span,
                                                 message: Some(format!("IO Error: {e:?}")),
-                                                dirname: nu_path::expand_path_with(
-                                                    path_no_whitespace,
-                                                    &cwd,
-                                                )
-                                                .display()
-                                                .to_string(),
+                                                dirname: path.display().to_string(),
                                             })
                                         }
                                     };
@@ -143,7 +138,7 @@ impl Command for Cd {
                                     return Err(ShellError::NotADirectory(v.span));
                                 }
                             };
-                            p
+                            path
                         }
 
                         // if canonicalize failed, let's check to see if it's abbreviated
